@@ -1,5 +1,4 @@
 import socket
-import sys
 from time import *
 import statistics as stat
 
@@ -34,15 +33,13 @@ while True:
     #Tenta receber uma mensagem do servidor, mas levanta uma excecao caso o tempo de espera exceda o colocado.
     try:
         pacote, serverAddress = clientSocket.recvfrom(40) #Pacote fixado para 40 bytes
-        if(sys.getsizeof(pacote)!=40):
-            print("Pacote inconsistente!")
-            continue
     except socket.timeout:
         print("Pacote atrasado!")
         continue
     #Imprime uma requisicao Pong, coloca o RTT do pacote na lista e atualiza lista de pacotes recebidos
     tempoRecebido = (time()-1668971305)*1000
     sequencia, pong, timestamp, mensagem = int.from_bytes(pacote[:5],'big'), chr(pacote[5]), int.from_bytes(pacote[6:10], 'big'), pacote[10:]
+    if pong!='1': continue
     recebidosList.append(sequencia)
     print('RECEBIDO | Sequencia:', "%2d" % (sequencia,), '|', pong, '|', int(tempoRecebido), 'ms | Mensagem:', mensagem.decode('ascii'))
     RTTList.append(tempoRecebido - timestamp)
