@@ -9,6 +9,7 @@ numPacotes = 10
 tempoEspera = 1
 perdaPacote = 0
 contador = 0
+startingTime = time()
 
 #Listas (Para RTT e para pacotes recebidos)
 RTTList = []
@@ -23,7 +24,7 @@ while True:
     contador += 1
     ################## Construcao do pacote ##################
     sequencia = contador.to_bytes(5, 'big')
-    tempoEnviado = int((time() - 1668971305)*1000).to_bytes(4,'big')  #Comeca a contar o RTT (Escolhi um tempo arbitrario para subtrair, limitando o tamanho do int)
+    tempoEnviado = int((time() - startingTime)*1000).to_bytes(4,'big')  #Comeca a contar o RTT (Escolhi um tempo arbitrario para subtrair, limitando o tamanho do int)
     mensagem = bytes('Ping', 'ascii')
     ping = bytes('0', 'ascii')
     pacote = sequencia + ping + tempoEnviado + mensagem
@@ -36,8 +37,11 @@ while True:
     except socket.timeout:
         print("Pacote atrasado!")
         continue
+    except Exception as e:
+        print(e)
+        break
     #Imprime uma requisicao Pong, coloca o RTT do pacote na lista e atualiza lista de pacotes recebidos
-    tempoRecebido = (time()-1668971305)*1000
+    tempoRecebido = (time()-startingTime)*1000
     sequencia, pong, timestamp, mensagem = int.from_bytes(pacote[:5],'big'), chr(pacote[5]), int.from_bytes(pacote[6:10], 'big'), pacote[10:]
     if pong!='1': continue
     recebidosList.append(sequencia)
@@ -49,5 +53,6 @@ while True:
         break
 
 #Print final
-print(numPacotes, 'packets transmitted,', numPacotes - perdaPacote, 'received,', (perdaPacote/numPacotes)*100,'% packet loss, time,', round(sum(RTTList),3),'ms rtt min/avg/max/mdev =', round(min(RTTList),3), '/',round(sum(RTTList)/len(RTTList),3), '/',round(max(RTTList),3), '/', round(stat.stdev(RTTList),3))
+if len(recebidosList) >0:
+    print(numPacotes, 'packets transmitted,', numPacotes - perdaPacote, 'received,', (perdaPacote/numPacotes)*100,'% packet loss, time,', round(sum(RTTList),3),'ms rtt min/avg/max/mdev =', round(min(RTTList),3), '/',round(sum(RTTList)/len(RTTList),3), '/',round(max(RTTList),3), '/', round(stat.stdev(RTTList),3))
 clientSocket.close()
