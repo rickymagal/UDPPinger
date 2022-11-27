@@ -22,6 +22,9 @@ clientSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 clientSocket.settimeout(tempoEspera)
 while True:
     contador += 1
+    if (contador > numPacotes):
+        perdaPacote = numPacotes - len(recebidosList)
+        break
     ################## Construcao do pacote ##################
     sequencia = contador.to_bytes(5, 'big')
     tempoEnviado = int((time() - startingTime)*1000).to_bytes(4,'big')  #Comeca a contar o RTT (Escolhi um tempo arbitrario para subtrair, limitando o tamanho do int)
@@ -39,7 +42,8 @@ while True:
         continue
     except Exception as e:
         print(e)
-        break
+        contador+=1
+        continue
     #Imprime uma requisicao Pong, coloca o RTT do pacote na lista e atualiza lista de pacotes recebidos
     tempoRecebido = (time()-startingTime)*1000
     sequencia, pong, timestamp, mensagem = int.from_bytes(pacote[:5],'big'), chr(pacote[5]), int.from_bytes(pacote[6:10], 'big'), pacote[10:]
@@ -48,9 +52,6 @@ while True:
     print('RECEBIDO | Sequencia:', "%2d" % (sequencia,), '|', pong, '|', int(tempoRecebido), 'ms | Mensagem:', mensagem.decode('ascii'))
     RTTList.append(tempoRecebido - timestamp)
     #Condicao de parada do loop. No caso, o cliente espera ate enviar o ultimo pacote para desistir dos perdidos
-    if(contador>=numPacotes):
-        perdaPacote = numPacotes - len(recebidosList)
-        break
 
 #Print final
 if len(recebidosList) >0:
